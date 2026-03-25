@@ -64,13 +64,19 @@
             app:iconSpaceReserved="false"
             app:title="@string/settings_other_header">
 
+        <SwitchPreferenceCompat
+                app:iconSpaceReserved="false"
+                app:key="autostart_on_boot"
+                app:title="@string/settings_autostart_title"
+                app:summary="@string/settings_autostart_summary"
+                app:defaultValue="true" />
+
         <EditTextPreference
                 app:iconSpaceReserved="false"
                 app:key="forvo_api_key"
                 app:title="@string/settings_forvo_api_key_title"
                 app:summary="@string/settings_forvo_api_key_summary"
-                app:dialogTitle="@string/settings_forvo_api_key_dialog_title"
-                app:useSimpleSummaryProvider="true" />
+                app:dialogTitle="@string/settings_forvo_api_key_dialog_title" />
 
         <ListPreference
             app:iconSpaceReserved="false"
