@@ -127,10 +127,12 @@ public class LocalAudioAPIRouting {
         // query generator based off of the original plugin:
         // https://github.com/Aquafina-water-bottle/local-audio-yomichan/blob/master/plugin/db_utils.py
         // Filter results WHERE "title" = 'My Title'
-        String selection = "expression = ?\n" +
-                "AND (reading IS NULL OR reading = ?)\n";
+        String selection = "((expression = ? AND (reading IS NULL OR reading = ?))" +
+            "OR (reading = ? AND expression != ?))\n";
         args.add(term);
         args.add(reading);
+        args.add(reading);
+        args.add(term);
 
         // filters by sources if necessary
         if (sources.size() != sourceIdToSource.size()) {
@@ -148,7 +150,8 @@ public class LocalAudioAPIRouting {
 
         // How you want the results sorted in the resulting Cursor
         // order by source
-        StringBuilder sortOrder = new StringBuilder("(CASE source ");
+        StringBuilder sortOrder = new StringBuilder("(expression != ?), (CASE source ");
+        args.add(term);
         for (int i = 0; i < sources.size(); i++) {
             sortOrder.append("WHEN ? THEN ").append(i).append("\n");
             args.add(sources.get(i));
@@ -176,7 +179,7 @@ public class LocalAudioAPIRouting {
             String source = entry.source;
             String file = entry.file;
 
-            LocalAudioSource audioSource = sourceIdToSource.get(entry.source);
+            LocalAudioSource audioSource = sourceIdToSource.get(source);
             if (audioSource == null) {
                 Log.w("AnkiConnectAndroid", "Unknown audio source: " + source);
                 continue;
@@ -184,6 +187,10 @@ public class LocalAudioAPIRouting {
 
             String name = audioSource.getSourceName(entry);
             String url = audioSource.constructFileURL(file);
+
+            if (!term.equals(entry.expression)) {
+                name += " (Only Reading)";
+            }
 
             Map<String, String> audioSourceEntry = new HashMap<>();
             audioSourceEntry.put("name", name);

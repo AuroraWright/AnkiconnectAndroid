@@ -64,6 +64,14 @@
             app:iconSpaceReserved="false"
             app:title="@string/settings_other_header">
 
+        <EditTextPreference
+                app:iconSpaceReserved="false"
+                app:key="forvo_api_key"
+                app:title="@string/settings_forvo_api_key_title"
+                app:summary="@string/settings_forvo_api_key_summary"
+                app:dialogTitle="@string/settings_forvo_api_key_dialog_title"
+                app:useSimpleSummaryProvider="true" />
+
         <ListPreference
             app:iconSpaceReserved="false"
             app:key="forvo_language"
