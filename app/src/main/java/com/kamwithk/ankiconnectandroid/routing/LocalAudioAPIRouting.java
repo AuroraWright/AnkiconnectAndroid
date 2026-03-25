@@ -17,12 +17,17 @@ import com.kamwithk.ankiconnectandroid.routing.database.AudioFileEntryDao;
 import com.kamwithk.ankiconnectandroid.routing.database.EntriesDatabase;
 import com.kamwithk.ankiconnectandroid.routing.database.Entry;
 import com.kamwithk.ankiconnectandroid.routing.database.EntryDao;
+import com.kamwithk.ankiconnectandroid.routing.localaudiosource.DaijisenAudioSource;
 import com.kamwithk.ankiconnectandroid.routing.localaudiosource.ForvoAudioSource;
+import com.kamwithk.ankiconnectandroid.routing.localaudiosource.ForvoExtAudioSource;
+import com.kamwithk.ankiconnectandroid.routing.localaudiosource.ForvoExt2AudioSource;
 import com.kamwithk.ankiconnectandroid.routing.localaudiosource.JPodAltAudioSource;
 import com.kamwithk.ankiconnectandroid.routing.localaudiosource.JPodAudioSource;
 import com.kamwithk.ankiconnectandroid.routing.localaudiosource.LocalAudioSource;
 import com.kamwithk.ankiconnectandroid.routing.localaudiosource.NHK16AudioSource;
+import com.kamwithk.ankiconnectandroid.routing.localaudiosource.OZK5AudioSource;
 import com.kamwithk.ankiconnectandroid.routing.localaudiosource.Shinmeikai8AudioSource;
+import com.kamwithk.ankiconnectandroid.routing.localaudiosource.TAASAudioSource;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -74,9 +79,14 @@ public class LocalAudioAPIRouting {
         this.sourceIdToSource = new LinkedHashMap<>();
         this.sourceIdToSource.put("nhk16", new NHK16AudioSource());
         this.sourceIdToSource.put("shinmeikai8", new Shinmeikai8AudioSource());
+        this.sourceIdToSource.put("daijisen", new DaijisenAudioSource());
+        this.sourceIdToSource.put("taas", new TAASAudioSource());
         this.sourceIdToSource.put("forvo", new ForvoAudioSource());
+        this.sourceIdToSource.put("forvo_ext", new ForvoExtAudioSource());
+        this.sourceIdToSource.put("forvo_ext2", new ForvoExt2AudioSource());
         this.sourceIdToSource.put("jpod", new JPodAudioSource());
         this.sourceIdToSource.put("jpod_alternate", new JPodAltAudioSource());
+        this.sourceIdToSource.put("ozk5", new OZK5AudioSource());
     }
 
     private EntriesDatabase getDB() {
