@@ -117,60 +117,81 @@ public class LocalAudioAPIRouting {
         List<String> users = getUser(parameters);
 
         List<Map<String, String>> audioSourcesResult = new ArrayList<>();
-        List<String> args = new ArrayList<>();
+        List<Object> args = new ArrayList<>();
 
 
         // opens database (creates if doesn't exist)
         EntriesDatabase db = getDB();
         EntryDao entryDao = db.entryDao();
 
+        StringBuilder selection = new StringBuilder();
+
         // query generator based off of the original plugin:
-        // https://github.com/Aquafina-water-bottle/local-audio-yomichan/blob/master/plugin/db_utils.py
-        // Filter results WHERE "title" = 'My Title'
-        String selection = "((expression = ? AND (reading IS NULL OR reading = ?))" +
-            "OR (reading = ? AND expression != ?))\n";
-        args.add(term);
-        args.add(reading);
-        args.add(reading);
-        args.add(term);
+        // https://github.com/L-M-Sherlock/local-audio-yomichan/blob/pr/yua-support/plugin/db_utils.py
+        if (reading == null || reading.trim().isEmpty()) {
+            selection.append("expression = ?\n");
+            args.add(term);
+        } else {
+            selection.append("(expression = ? OR reading = ?)\n");
+            args.add(term);
+            args.add(reading);
+        }
 
         // filters by sources if necessary
         if (sources.size() != sourceIdToSource.size()) {
             String nQuestionMarks = String.join(",", Collections.nCopies(sources.size(), "?"));
-            selection += "AND (source in (" + nQuestionMarks + "))\n";
+            selection.append("AND (source IN (").append(nQuestionMarks).append("))\n");
             args.addAll(sources);
         }
 
         // filters by speakers if necessary
         if (users.size() > 0) {
             String nQuestionMarks = String.join(",", Collections.nCopies(users.size(), "?"));
-            selection += "AND (speaker IS NULL or speaker in (" + nQuestionMarks + "))\n";
+            selection.append("AND (speaker IS NULL OR speaker IN (").append(nQuestionMarks).append("))\n");
             args.addAll(users);
         }
 
         // How you want the results sorted in the resulting Cursor
+        List<String> queryOrderParts = new ArrayList<>();
+
+        // match order prioritization
+        if (reading != null && !reading.trim().isEmpty()) {
+            String matchOrder = "(CASE " +
+                    "WHEN expression = ? AND reading = ? THEN 0 " +
+                    "WHEN expression = ? THEN 1 " +
+                    "WHEN reading = ? THEN 2 " +
+                    "ELSE 3 END)";
+            queryOrderParts.add(matchOrder);
+
+            args.add(term);
+            args.add(reading);
+            args.add(term);
+            args.add(reading);
+        }
+
         // order by source
-        StringBuilder sortOrder = new StringBuilder("(expression != ?), (CASE source ");
-        args.add(term);
+        StringBuilder sourceOrder = new StringBuilder("(CASE source ");
         for (int i = 0; i < sources.size(); i++) {
-            sortOrder.append("WHEN ? THEN ").append(i).append("\n");
+            sourceOrder.append("WHEN ? THEN ").append(i).append(" ");
             args.add(sources.get(i));
         }
-        sortOrder.append(" END)\n");
+        sourceOrder.append("END)");
+        queryOrderParts.add(sourceOrder.toString());
 
         // order by speakers if necessary
         if (users.size() > 0) {
-            sortOrder.append(", (CASE speaker ");
+            StringBuilder userOrder = new StringBuilder("(CASE speaker ");
             for (int i = 0; i < users.size(); i++) {
-                sortOrder.append("WHEN ? THEN ").append(i).append("\n");
+                userOrder.append("WHEN ? THEN ").append(i).append(" ");
                 args.add(users.get(i));
             }
-            sortOrder.append(" END)\n");
+            userOrder.append("END)");
+            queryOrderParts.add(userOrder.toString());
         }
 
         String queryString = "\n" +
-                "SELECT * FROM entries WHERE (" + selection + ")\n" +
-                "ORDER BY " + sortOrder + ", reading;";
+                "SELECT * FROM entries WHERE (" + selection.toString() + ")\n" +
+                "ORDER BY " + String.join(",\n  ", queryOrderParts) + ";";
 
         SimpleSQLiteQuery query = new SimpleSQLiteQuery(queryString, args.toArray());
         List<Entry> entries = entryDao.getSources(query);
@@ -188,8 +209,17 @@ public class LocalAudioAPIRouting {
             String name = audioSource.getSourceName(entry);
             String url = audioSource.constructFileURL(file);
 
-            if (!term.equals(entry.expression)) {
-                name += " (Only Reading)";
+            if (reading != null && !reading.trim().isEmpty()) {
+                boolean matchExpression = term.equals(entry.expression);
+                boolean matchReading = reading.equals(entry.reading);
+
+                if (matchExpression && matchReading) {
+                    name += " (Expression+Reading)";
+                } else if (matchExpression) {
+                    name += " (Only Expression)";
+                } else if (matchReading) {
+                    name += " (Only Reading)";
+                }
             }
 
             Map<String, String> audioSourceEntry = new HashMap<>();
@@ -230,7 +260,11 @@ public class LocalAudioAPIRouting {
     }
 
     private String getReading(Map<String, List<String>> parameters) {
-        return Objects.requireNonNull(parameters.get("reading")).get(0);
+        List<String> readingParam = parameters.get("reading");
+        if (readingParam != null && !readingParam.isEmpty()) {
+            return readingParam.get(0);
+        }
+        return null;
     }
 
     private List<String> getUser(Map<String, List<String>> parameters) {
