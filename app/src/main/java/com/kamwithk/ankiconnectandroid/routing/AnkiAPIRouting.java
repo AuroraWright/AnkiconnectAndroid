@@ -146,7 +146,12 @@ public class AnkiAPIRouting {
         Intent syncIntent = new Intent("com.ichi2.anki.DO_SYNC");
         syncIntent.setPackage("com.ichi2.anki");
         syncIntent.addCategory(Intent.CATEGORY_DEFAULT);
-        syncIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        syncIntent.setFlags(
+                Intent.FLAG_ACTIVITY_NEW_TASK
+              | Intent.FLAG_ACTIVITY_NO_HISTORY
+              | Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
+              | Intent.FLAG_ACTIVITY_NO_ANIMATION
+        );
 
         integratedAPI.getContext().startActivity(syncIntent);
         return "null";
