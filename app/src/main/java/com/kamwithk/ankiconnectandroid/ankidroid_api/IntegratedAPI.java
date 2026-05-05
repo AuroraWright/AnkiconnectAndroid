@@ -56,6 +56,10 @@ public class IntegratedAPI {
     //    return context.getExternalFilesDir(null);
     //}
 
+    public Context getContext() {
+        return context;
+    }
+
     public void addSampleCard() {
         Map<String, String> data = new HashMap<>();
         data.put("Back", "sunrise");

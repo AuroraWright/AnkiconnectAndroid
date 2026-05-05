@@ -24,6 +24,7 @@ import java.util.Map;
 
 import static fi.iki.elonen.NanoHTTPD.newFixedLengthResponse;
 
+import android.content.Intent;
 import android.util.Log;
 
 
@@ -44,6 +45,8 @@ public class AnkiAPIRouting {
         switch (Parser.get_action(raw_json)) {
             case "version":
                 return version();
+            case "sync":
+                return sync();
             case "deckNames":
                 return deckNames();
             case "deckNamesAndIds":
@@ -137,6 +140,16 @@ public class AnkiAPIRouting {
 
     private String default_version() {
         return "AnkiConnect v.6";
+    }
+
+    private String sync() throws Exception {
+        Intent syncIntent = new Intent("com.ichi2.anki.DO_SYNC");
+        syncIntent.setPackage("com.ichi2.anki");
+        syncIntent.addCategory(Intent.CATEGORY_DEFAULT);
+        syncIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+        integratedAPI.getContext().startActivity(syncIntent);
+        return "null";
     }
 
     private String deckNames() throws Exception {
